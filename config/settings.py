@@ -76,6 +76,8 @@ REST_FRAMEWORK = {
 
 ROOT_URLCONF = 'config.urls'
 
+AUTH_USER_MODEL = 'accounts.User'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
