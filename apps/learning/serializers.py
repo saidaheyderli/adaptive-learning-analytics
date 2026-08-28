@@ -38,8 +38,8 @@ class AttemptSubmitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attempt
-        fields = ('id', 'question', 'selected_choice', 'time_taken_seconds', 'submitted_at')
-        read_only_fields = ('id', 'submitted_at')
+        fields = ('id', 'question', 'selected_choice', 'is_correct', 'time_taken_seconds', 'submitted_at')
+        read_only_fields = ('id', 'is_correct', 'submitted_at')
 
     def validate(self, attrs):
         question = attrs['question']
