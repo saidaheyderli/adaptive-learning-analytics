@@ -10,15 +10,20 @@ Traditional quiz platforms treat every student identically. This platform
 instead records *every* attempt (correct/incorrect, time taken) so that
 weak topics can be identified per student, not just guessed at.
 
-## Features (MVP)
+## Features
 
 - Token-based authentication with two roles: **student** and **instructor**
 - Instructors create topics and multiple-choice questions
 - Students submit attempts; correctness is derived server-side (never
   trusted from the client)
 - Per-topic accuracy analytics endpoint
+- **AI-powered recommendations** (Gemini): topics where a student's
+  accuracy falls below a configurable threshold trigger a generated
+  explanation and a new targeted practice question, cached per student/topic
 - Full REST API (Django REST Framework)
-- 15 automated tests covering models, permissions, and API behavior
+- 25 automated tests covering models, permissions, API behavior, and the
+  recommendation service (Gemini calls mocked in tests — no real API
+  calls or costs incurred during CI)
 - CI pipeline (GitHub Actions) running the full test suite against
   PostgreSQL on every push
 
@@ -87,12 +92,21 @@ pytest -v
 | POST   | `/api/attempts/`                 | Submit an answer attempt              | Authenticated      |
 | GET    | `/api/attempts/`                 | List attempts (own, or all if instructor) | Authenticated |
 | GET    | `/api/analytics/topic-accuracy/`| Per-topic accuracy breakdown          | Authenticated      |
+| GET    | `/api/analytics/recommendations/`| AI-generated explanation + practice question for each weak topic | Authenticated |
+
+## Configuration notes
+
+- `WEAKNESS_THRESHOLD_PERCENT` (default 50) and `WEAKNESS_MIN_ATTEMPTS`
+  (default 3) control weakness detection sensitivity — see `config/settings.py`.
+- `GEMINI_API_KEY` must be set in `.env` for the recommendations endpoint
+  to work. Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
+  Without it, `/api/analytics/recommendations/` will return a
+  `generation_errors` entry per weak topic instead of failing outright.
 
 ## Roadmap
 
-- **Phase 2** — AI-powered recommendations: use Gemini to generate targeted
-  practice questions based on detected weak topics
-- **Phase 3** — Lightweight dashboard for visualizing progress
+- **Phase 3** — Lightweight dashboard for visualizing progress and
+  recommendations
 
 See [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) for the full original
 scope and design rationale.
