@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AnswerChoice, Attempt, Question, Topic
+from .models import AnswerChoice, Attempt, Question, Recommendation, Topic
 
 
 class AnswerChoiceInline(admin.TabularInline):
@@ -31,3 +31,10 @@ class AttemptAdmin(admin.ModelAdmin):
     list_display = ('student', 'question', 'is_correct', 'time_taken_seconds', 'submitted_at')
     list_filter = ('is_correct', 'question__topic')
     readonly_fields = ('submitted_at',)
+
+
+@admin.register(Recommendation)
+class RecommendationAdmin(admin.ModelAdmin):
+    list_display = ('student', 'topic', 'accuracy_at_generation', 'created_at')
+    list_filter = ('topic',)
+    readonly_fields = ('created_at',)

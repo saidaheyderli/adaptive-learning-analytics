@@ -95,3 +95,38 @@ class Attempt(models.Model):
     def __str__(self):
         result = 'correct' if self.is_correct else 'incorrect'
         return f'{self.student} — {self.question_id} ({result})'
+
+
+class Recommendation(models.Model):
+    """
+    An AI-generated recommendation for a student on a topic where their
+    accuracy is below the weakness threshold. Cached so we don't call the
+    Gemini API again for a topic whose weakness signal hasn't changed
+    since the last recommendation was generated.
+    """
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='recommendations',
+    )
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='recommendations')
+    accuracy_at_generation = models.FloatField(
+        help_text='The accuracy percent (0-100) that triggered this recommendation.'
+    )
+    explanation = models.TextField(
+        help_text='Short, targeted explanation of the concept the student is struggling with.'
+    )
+    practice_prompt = models.TextField(
+        help_text='A new practice question generated to address the weak topic.'
+    )
+    practice_choices = models.JSONField(
+        help_text='List of {"text": str, "is_correct": bool} generated answer choices.'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Recommendation for {self.student} on {self.topic.name}'

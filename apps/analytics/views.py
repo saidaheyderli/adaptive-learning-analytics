@@ -5,6 +5,10 @@ from rest_framework.views import APIView
 
 from apps.learning.models import Attempt
 
+from .gemini_client import GeminiRecommendationError
+from .serializers import RecommendationSerializer
+from .services import get_or_create_recommendation, get_weak_topics
+
 
 class TopicAccuracyView(APIView):
     """
@@ -46,3 +50,35 @@ class TopicAccuracyView(APIView):
             for row in stats
         ]
         return Response(results)
+
+
+class RecommendationsView(APIView):
+    """
+    For the current student: detect weak topics (accuracy below
+    WEAKNESS_THRESHOLD_PERCENT with at least WEAKNESS_MIN_ATTEMPTS
+    attempts) and return an AI-generated explanation + practice question
+    for each. Recommendations are cached per student/topic and only
+    regenerated if accuracy has dropped further since the last one.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        student = request.user
+        weak_topics = get_weak_topics(student)
+
+        results = []
+        errors = []
+        for weak in weak_topics:
+            try:
+                recommendation, _created = get_or_create_recommendation(
+                    student, weak['topic_id'], weak['accuracy_percent']
+                )
+                results.append(RecommendationSerializer(recommendation).data)
+            except GeminiRecommendationError as exc:
+                errors.append({'topic_id': weak['topic_id'], 'error': str(exc)})
+
+        payload = {'recommendations': results}
+        if errors:
+            payload['generation_errors'] = errors
+        return Response(payload)

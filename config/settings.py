@@ -78,6 +78,15 @@ ROOT_URLCONF = 'config.urls'
 
 AUTH_USER_MODEL = 'accounts.User'
 
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+
+# Accuracy percent below which a topic is flagged as a weakness.
+WEAKNESS_THRESHOLD_PERCENT = 50.0
+
+# Minimum attempts on a topic before it's eligible for weakness detection
+# (avoids flagging a topic after a single unlucky guess).
+WEAKNESS_MIN_ATTEMPTS = 3
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
