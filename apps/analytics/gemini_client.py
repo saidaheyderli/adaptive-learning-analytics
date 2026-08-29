@@ -14,7 +14,7 @@ from google.genai import types
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = 'gemini-2.5-flash'
+MODEL_NAME = 'gemini-3.6-flash'
 
 RECOMMENDATION_SCHEMA = {
     'type': 'object',
