@@ -20,10 +20,13 @@ weak topics can be identified per student, not just guessed at.
 - **AI-powered recommendations** (Gemini): topics where a student's
   accuracy falls below a configurable threshold trigger a generated
   explanation and a new targeted practice question, cached per student/topic
+- **Dashboard** (`/`): a single-page, dependency-free frontend (vanilla
+  HTML/CSS/JS served by Django) showing per-topic accuracy and AI
+  recommendations for the signed-in user
 - Full REST API (Django REST Framework)
-- 25 automated tests covering models, permissions, API behavior, and the
-  recommendation service (Gemini calls mocked in tests — no real API
-  calls or costs incurred during CI)
+- 27 automated tests covering models, permissions, API behavior,
+  the recommendation service (Gemini calls mocked in tests — no real API
+  calls or costs incurred during CI), and the dashboard view
 - CI pipeline (GitHub Actions) running the full test suite against
   PostgreSQL on every push
 
@@ -105,8 +108,9 @@ pytest -v
 
 ## Roadmap
 
-- **Phase 3** — Lightweight dashboard for visualizing progress and
-  recommendations
+Phases 1–3 (MVP, AI recommendations, dashboard) are complete. Possible
+next steps: instructor-facing class-wide analytics view, spaced-repetition
+scheduling, exportable progress reports.
 
 See [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) for the full original
 scope and design rationale.

@@ -6,4 +6,5 @@ urlpatterns = [
     path('api/auth/', include('apps.accounts.urls')),
     path('api/', include('apps.learning.urls')),
     path('api/analytics/', include('apps.analytics.urls')),
+    path('', include('apps.dashboard.urls')),
 ]

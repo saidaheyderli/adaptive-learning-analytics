@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress Ledger — Adaptive Learning Analytics</title>
+<style>
+  :root {
+    --ink: #e8e6df;
+    --ink-dim: #9a9d9a;
+    --paper: #1c2321;
+    --paper-raised: #232b28;
+    --rule: #384039;
+    --mark: #d9a441;
+    --mark-dim: #8a6a2c;
+    --bad: #c9695b;
+    --good: #7a9e7e;
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+
+  header.masthead {
+    border-bottom: 2px solid var(--rule);
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  header.masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 28px;
+    letter-spacing: 0.01em;
+    margin: 0;
+  }
+
+  header.masthead .dateline {
+    color: var(--ink-dim);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* --- Login panel --- */
+  #login-panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 24px;
+    max-width: 360px;
+  }
+
+  #login-panel h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    margin: 0 0 16px;
+    font-weight: 400;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-dim);
+    margin-bottom: 4px;
+  }
+
+  input {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 8px 10px;
+    border-radius: 2px;
+    margin-bottom: 14px;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--mark);
+  }
+
+  button {
+    background: var(--mark);
+    color: #1c2321;
+    border: none;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  button:hover { background: #e8b95c; }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  button.ghost {
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-dim);
+    font-weight: 400;
+  }
+  button.ghost:hover { border-color: var(--ink-dim); color: var(--ink); }
+
+  #error-msg {
+    color: var(--bad);
+    font-size: 13px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* --- Dashboard content --- */
+  #app-panel { display: none; }
+
+  .whoami {
+    color: var(--ink-dim);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  .whoami strong { color: var(--ink); }
+
+  section.block { margin-bottom: 40px; }
+
+  section.block > h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 8px;
+    margin: 0 0 16px;
+  }
+
+  /* Mastery bars (topic accuracy) */
+  .mastery-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 52px;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #2a312d;
+  }
+  .mastery-row:last-child { border-bottom: none; }
+
+  .mastery-topic {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mastery-track {
+    height: 8px;
+    background: #2a312d;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .mastery-fill {
+    height: 100%;
+    background: var(--good);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .mastery-fill.weak { background: var(--bad); }
+
+  .mastery-pct {
+    font-size: 13px;
+    text-align: right;
+    color: var(--ink-dim);
+  }
+
+  .empty-note {
+    color: var(--ink-dim);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* Recommendation cards */
+  .rec-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--mark);
+    border-radius: 2px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+
+  .rec-card .rec-eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mark);
+    margin-bottom: 8px;
+  }
+
+  .rec-card .rec-explanation {
+    font-family: var(--font-display);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  .rec-card .rec-prompt {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-bottom: 10px;
+  }
+
+  .rec-choices { list-style: none; margin: 0; padding: 0; }
+  .rec-choices li {
+    font-size: 13px;
+    padding: 6px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    margin-bottom: 6px;
+    color: var(--ink-dim);
+  }
+
+  #refresh-btn { margin-top: 4px; }
+
+  footer {
+    margin-top: 48px;
+    color: var(--ink-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <h1>Progress Ledger</h1>
+    <span class="dateline">Adaptive Learning Analytics</span>
+  </header>
+
+  <div id="login-panel">
+    <h2>Sign in</h2>
+    <form id="login-form">
+      <label for="username">Username</label>
+      <input type="text" id="username" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+      <button type="submit">Sign in</button>
+      <div id="error-msg"></div>
+    </form>
+  </div>
+
+  <div id="app-panel">
+    <p class="whoami">Signed in as <strong id="whoami-name"></strong> &middot; <button class="ghost" id="logout-btn" type="button">Sign out</button></p>
+
+    <section class="block">
+      <h2>Accuracy by topic</h2>
+      <div id="mastery-list"></div>
+    </section>
+
+    <section class="block">
+      <h2>Recommended practice</h2>
+      <div id="rec-list"></div>
+      <button class="ghost" id="refresh-btn" type="button">Refresh recommendations</button>
+    </section>
+  </div>
+
+  <footer>Adaptive Learning Analytics &middot; API-first backend, this page is a thin client over it</footer>
+</div>
+
+<script>
+const API = '';
+const $ = (sel) => document.querySelector(sel);
+
+function getToken() { return localStorage.getItem('ala_token'); }
+function setToken(t) { localStorage.setItem('ala_token', t); }
+function clearToken() { localStorage.removeItem('ala_token'); }
+
+function showError(msg) {
+  const el = $('#error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError() { $('#error-msg').style.display = 'none'; }
+
+async function apiFetch(path, options = {}) {
+  const headers = Object.assign({}, options.headers, {
+    'Authorization': `Token ${getToken()}`,
+    'Content-Type': 'application/json',
+  });
+  const res = await fetch(API + path, Object.assign({}, options, { headers }));
+  if (res.status === 401) {
+    clearToken();
+    showAuthPanel();
+    throw new Error('Session expired — please sign in again.');
+  }
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Request to ${path} failed (${res.status}): ${body}`);
+  }
+  return res.json();
+}
+
+function showAuthPanel() {
+  $('#login-panel').style.display = 'block';
+  $('#app-panel').style.display = 'none';
+}
+
+function showAppPanel() {
+  $('#login-panel').style.display = 'none';
+  $('#app-panel').style.display = 'block';
+}
+
+function renderMastery(rows) {
+  const container = $('#mastery-list');
+  container.innerHTML = '';
+  if (!rows.length) {
+    container.innerHTML = '<p class="empty-note">No attempts recorded yet — answer a few questions to see your accuracy here.</p>';
+    return;
+  }
+  for (const row of rows) {
+    const pct = row.accuracy_percent;
+    const weak = pct < 50;
+    const div = document.createElement('div');
+    div.className = 'mastery-row';
+    div.innerHTML = `
+      <div class="mastery-topic" title="${row.topic_name}">${row.topic_name}</div>
+      <div class="mastery-track"><div class="mastery-fill ${weak ? 'weak' : ''}" style="width:${pct}%"></div></div>
+      <div class="mastery-pct">${pct.toFixed(0)}%</div>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function renderRecommendations(recs) {
+  const container = $('#rec-list');
+  container.innerHTML = '';
+  if (!recs.length) {
+    container.innerHTML = '<p class="empty-note">No weak topics detected right now — keep practicing to build up a history.</p>';
+    return;
+  }
+  for (const rec of recs) {
+    const card = document.createElement('div');
+    card.className = 'rec-card';
+    const choices = rec.practice_choices.map(c => `<li>${c.text}</li>`).join('');
+    card.innerHTML = `
+      <div class="rec-eyebrow">${rec.topic_name} &middot; ${rec.accuracy_at_generation.toFixed(0)}% accuracy</div>
+      <div class="rec-explanation">${rec.explanation}</div>
+      <div class="rec-prompt">${rec.practice_prompt}</div>
+      <ul class="rec-choices">${choices}</ul>
+    `;
+    container.appendChild(card);
+  }
+}
+
+async function loadDashboard() {
+  try {
+    const me = await apiFetch('/api/auth/me/');
+    $('#whoami-name').textContent = `${me.username} (${me.role})`;
+
+    const accuracy = await apiFetch('/api/analytics/topic-accuracy/');
+    renderMastery(accuracy);
+
+    $('#rec-list').innerHTML = '<p class="empty-note">Checking for weak topics…</p>';
+    const recData = await apiFetch('/api/analytics/recommendations/');
+    renderRecommendations(recData.recommendations || []);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+$('#login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideError();
+  const username = $('#username').value;
+  const password = $('#password').value;
+  try {
+    const res = await fetch(API + '/api/auth/login/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) throw new Error('Invalid username or password.');
+    const data = await res.json();
+    setToken(data.token);
+    showAppPanel();
+    loadDashboard();
+  } catch (err) {
+    showError(err.message);
+  }
+});
+
+$('#logout-btn').addEventListener('click', () => {
+  clearToken();
+  showAuthPanel();
+});
+
+$('#refresh-btn').addEventListener('click', loadDashboard);
+
+if (getToken()) {
+  showAppPanel();
+  loadDashboard();
+} else {
+  showAuthPanel();
+}
+</script>
+</body>
+</html>
