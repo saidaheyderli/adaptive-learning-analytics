@@ -82,7 +82,12 @@ def generate_recommendation(topic_name: str, accuracy_percent: float, recent_pro
     )
 
     try:
-        response = _client().models.generate_content(
+        client = _client()  # keep a reference alive for the duration of the call —
+        # calling _client().models.generate_content(...) inline lets Python garbage
+        # collect the temporary Client before the request completes, which raises
+        # "Cannot send a request, as the client has been closed." (a known issue
+        # in google-genai >=1.39.0, see googleapis/python-genai#1763).
+        response = client.models.generate_content(
             model=MODEL_NAME,
             contents=prompt,
             config=types.GenerateContentConfig(
