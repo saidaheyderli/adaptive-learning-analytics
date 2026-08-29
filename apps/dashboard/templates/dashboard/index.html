@@ -239,12 +239,37 @@
   .rec-choices { list-style: none; margin: 0; padding: 0; }
   .rec-choices li {
     font-size: 13px;
-    padding: 6px 10px;
+    padding: 10px 12px;
     border: 1px solid var(--rule);
     border-radius: 2px;
     margin-bottom: 6px;
-    color: var(--ink-dim);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
+  .rec-choices li:hover { border-color: var(--mark-dim); }
+  .rec-choices li.correct {
+    border-color: var(--good);
+    background: rgba(122, 158, 126, 0.12);
+    color: var(--good);
+    cursor: default;
+  }
+  .rec-choices li.incorrect {
+    border-color: var(--bad);
+    background: rgba(201, 105, 91, 0.12);
+    color: var(--bad);
+    cursor: default;
+  }
+  .rec-choices li.disabled { cursor: default; opacity: 0.6; }
+  .rec-feedback {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+    min-height: 16px;
+  }
+  .rec-feedback.correct-text { color: var(--good); }
+  .rec-feedback.incorrect-text { color: var(--bad); }
 
   #refresh-btn { margin-top: 4px; }
 
@@ -371,13 +396,61 @@ function renderRecommendations(recs) {
   for (const rec of recs) {
     const card = document.createElement('div');
     card.className = 'rec-card';
-    const choices = rec.practice_choices.map(c => `<li>${c.text}</li>`).join('');
-    card.innerHTML = `
-      <div class="rec-eyebrow">${rec.topic_name} &middot; ${rec.accuracy_at_generation.toFixed(0)}% accuracy</div>
-      <div class="rec-explanation">${rec.explanation}</div>
-      <div class="rec-prompt">${rec.practice_prompt}</div>
-      <ul class="rec-choices">${choices}</ul>
-    `;
+
+    const eyebrow = document.createElement('div');
+    eyebrow.className = 'rec-eyebrow';
+    eyebrow.textContent = `${rec.topic_name} · ${rec.accuracy_at_generation.toFixed(0)}% accuracy`;
+
+    const explanation = document.createElement('div');
+    explanation.className = 'rec-explanation';
+    explanation.textContent = rec.explanation;
+
+    const prompt = document.createElement('div');
+    prompt.className = 'rec-prompt';
+    prompt.textContent = rec.practice_prompt + ' (click an answer)';
+
+    const list = document.createElement('ul');
+    list.className = 'rec-choices';
+
+    const feedback = document.createElement('div');
+    feedback.className = 'rec-feedback';
+
+    let answered = false;
+
+    rec.practice_choices.forEach((choice) => {
+      const li = document.createElement('li');
+      li.textContent = choice.text;
+      li.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+
+        // Reveal the correct answer and mark what was clicked.
+        [...list.children].forEach((node, idx) => {
+          const isThisChoice = rec.practice_choices[idx] === choice;
+          node.classList.add('disabled');
+          if (rec.practice_choices[idx].is_correct) {
+            node.classList.add('correct');
+          } else if (isThisChoice) {
+            node.classList.add('incorrect');
+          }
+        });
+
+        if (choice.is_correct) {
+          feedback.textContent = 'Correct!';
+          feedback.className = 'rec-feedback correct-text';
+        } else {
+          feedback.textContent = 'Not quite — the correct answer is highlighted above.';
+          feedback.className = 'rec-feedback incorrect-text';
+        }
+      });
+      list.appendChild(li);
+    });
+
+    card.appendChild(eyebrow);
+    card.appendChild(explanation);
+    card.appendChild(prompt);
+    card.appendChild(list);
+    card.appendChild(feedback);
     container.appendChild(card);
   }
 }
